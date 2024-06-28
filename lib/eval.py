@@ -8,7 +8,7 @@ from scipy.spatial import cKDTree
 
 def find_nn_cpu(feat0, feat1, return_distance=False):
   feat1tree = cKDTree(feat1)
-  dists, nn_inds = feat1tree.query(feat0, k=1, n_jobs=-1)
+  dists, nn_inds = feat1tree.query(feat0, k=1, workers=-1) #<<<<<<<<<<<<<<<<<<<<<<
   if return_distance:
     return nn_inds, dists
   else:
