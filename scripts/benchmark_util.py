@@ -11,7 +11,7 @@ from util.pointcloud import compute_overlap_ratio, \
 def run_ransac(xyz0, xyz1, feat0, feat1, voxel_size):
   distance_threshold = voxel_size * 1.5
   result_ransac = o3d.pipelines.registration.registration_ransac_based_on_feature_matching(
-      xyz0, xyz1, feat0, feat1, distance_threshold,
+      xyz0, xyz1, feat0, feat1, True, distance_threshold,
       o3d.pipelines.registration.TransformationEstimationPointToPoint(False), 4, [
           o3d.pipelines.registration.CorrespondenceCheckerBasedOnEdgeLength(0.9),
           o3d.pipelines.registration.CorrespondenceCheckerBasedOnDistance(distance_threshold)
