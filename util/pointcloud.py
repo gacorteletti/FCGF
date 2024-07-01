@@ -15,7 +15,7 @@ def make_open3d_point_cloud(xyz, color=None):
 
 
 def make_open3d_feature(data, dim, npts):
-  feature = o3d.registration.Feature()
+  feature = o3d.pipelines.registration.Feature()
   feature.resize(dim, npts)
   feature.data = data.cpu().numpy().astype('d').transpose()
   return feature
@@ -25,7 +25,7 @@ def make_open3d_feature_from_numpy(data):
   assert isinstance(data, np.ndarray)
   assert data.ndim == 2
 
-  feature = o3d.registration.Feature()
+  feature = o3d.pipelines.registration.Feature()
   feature.resize(data.shape[1], data.shape[0])
   feature.data = data.astype('d').transpose()
   return feature

@@ -458,10 +458,10 @@ class KITTIPairDataset(PairDataset):
         xyz0_t = self.apply_transform(xyz0[sel0], M)
         pcd0 = make_open3d_point_cloud(xyz0_t)
         pcd1 = make_open3d_point_cloud(xyz1[sel1])
-        reg = o3d.registration.registration_icp(
+        reg = o3d.pipelines.registration.registration_icp(
             pcd0, pcd1, 0.2, np.eye(4),
-            o3d.registration.TransformationEstimationPointToPoint(),
-            o3d.registration.ICPConvergenceCriteria(max_iteration=200))
+            o3d.pipelines.registration.TransformationEstimationPointToPoint(),
+            o3d.pipelines.registration.ICPConvergenceCriteria(max_iteration=200))
         pcd0.transform(reg.transformation)
         # pcd0.transform(M2) or self.apply_transform(xyz0, M2)
         M2 = M @ reg.transformation

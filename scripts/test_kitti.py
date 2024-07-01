@@ -82,12 +82,12 @@ def main(config):
 
     reg_timer.tic()
     distance_threshold = config.voxel_size * 1.0
-    ransac_result = o3d.registration.registration_ransac_based_on_feature_matching(
+    ransac_result = o3d.pipelines.registration.registration_ransac_based_on_feature_matching(
         pcd0, pcd1, feat0, feat1, distance_threshold,
-        o3d.registration.TransformationEstimationPointToPoint(False), 4, [
-            o3d.registration.CorrespondenceCheckerBasedOnEdgeLength(0.9),
-            o3d.registration.CorrespondenceCheckerBasedOnDistance(distance_threshold)
-        ], o3d.registration.RANSACConvergenceCriteria(4000000, 10000))
+        o3d.pipelines.registration.TransformationEstimationPointToPoint(False), 4, [
+            o3d.pipelines.registration.CorrespondenceCheckerBasedOnEdgeLength(0.9),
+            o3d.pipelines.registration.CorrespondenceCheckerBasedOnDistance(distance_threshold)
+        ], o3d.pipelines.registration.RANSACConvergenceCriteria(4000000, 10000))
     T_ransac = torch.from_numpy(ransac_result.transformation.astype(np.float32))
     reg_timer.toc()
 
