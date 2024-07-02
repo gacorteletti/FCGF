@@ -41,6 +41,8 @@ def extract_features_batch(model, config, source_path, target_path, voxel_size, 
   num_feat = 0
   model.eval()
 
+  logging.info("==================================== FEATURE EXTRACTION ====================================")
+
   for fo in folders:
     if 'evaluation' in fo:
       continue
@@ -75,7 +77,7 @@ def extract_features_batch(model, config, source_path, target_path, voxel_size, 
           feature=feature.detach().cpu().numpy())
       if i % 20 == 0 and i > 0:
         logging.info(
-            f'Average time: {tmeter.avg}, FPS: {num_feat / tmeter.sum}, time / feat: {tmeter.sum / num_feat}, '
+            f'\t\tAverage Time: {tmeter.avg}  |  FPS: {num_feat / tmeter.sum}  |  Time / #Features: {tmeter.sum / num_feat}, '
         )
 
   f.close()
@@ -88,6 +90,9 @@ def registration(feature_path, voxel_size):
   (see Geometric Registration Benchmark section in
   http://3dmatch.cs.princeton.edu/)
   """
+  
+  logging.info("======================================= REGISTRATION =======================================")
+  
   # List file from the extract_features_batch function
   with open(os.path.join(feature_path, "list.txt")) as f:
     sets = f.readlines()
@@ -97,6 +102,9 @@ def registration(feature_path, voxel_size):
     pts_num = int(s[1])
     matching_pairs = gen_matching_pair(pts_num)
     results = []
+
+    logging.info("Set: %s" % (set_name))
+
     for m in matching_pairs:
       results.append(do_single_pair_matching(feature_path, set_name, m, voxel_size))
     traj = gather_results(results)
@@ -168,7 +176,8 @@ def feature_evaluation(source_path, feature_path, voxel_size, num_rand_keypoints
 
   tau_1 = 0.1  # 10cm
   tau_2 = 0.05  # 5% inlier
-  logging.info("%f %f" % (tau_1, tau_2))
+  logging.info("==================================== FEATURE EVALUATION ====================================")
+  logging.info("==== Inlier Distance Threshold (tau_1): %.3f  |  Inlier Recall Threshold (tau_2): %.3f ===" % (tau_1, tau_2))
   recall = []
   for s in sets:
     set_name = s[0]
@@ -183,11 +192,11 @@ def feature_evaluation(source_path, feature_path, voxel_size, num_rand_keypoints
     mean_recall = np.array(results).mean()
     std_recall = np.array(results).std()
     recall.append([set_name, mean_recall, std_recall])
-    logging.info(f'{set_name}: {mean_recall} +- {std_recall}')
-  for r in recall:
-    logging.info("%s : %.4f" % (r[0], r[1]))
+    logging.info(f'\t{set_name}: {mean_recall} +- {std_recall}')
+  #for r in recall:
+  #  logging.info("%s : %.4f" % (r[0], r[1]))
   scene_r = np.array([r[1] for r in recall])
-  logging.info("average : %.4f +- %.4f" % (scene_r.mean(), scene_r.std()))
+  logging.info("Average FMR: %.4f +- %.4f" % (scene_r.mean(), scene_r.std()))
 
 
 if __name__ == '__main__':

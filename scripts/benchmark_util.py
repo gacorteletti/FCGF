@@ -47,7 +47,7 @@ def do_single_pair_matching(feature_path, set_name, m, voxel_size):
   i, j, s = m
   name_i = "%s_%03d" % (set_name, i)
   name_j = "%s_%03d" % (set_name, j)
-  logging.info("matching %s %s" % (name_i, name_j))
+  logging.info("\t\tMatching %03d %03d" % (i, j))
   points_i, xyz_i, feat_i = read_data(feature_path, name_i)
   points_j, xyz_j, feat_j = read_data(feature_path, name_j)
   if len(xyz_i.points) < len(xyz_j.points):
@@ -56,7 +56,7 @@ def do_single_pair_matching(feature_path, set_name, m, voxel_size):
     trans = run_ransac(xyz_j, xyz_i, feat_j, feat_i, voxel_size)
     trans = np.linalg.inv(trans)
   ratio = compute_overlap_ratio(xyz_i, xyz_j, trans, voxel_size)
-  logging.info(f"{ratio}")
+  logging.info("\t\t\tOverlap Ratio: %.4f" % (ratio))
   if ratio > 0.3:
     return [True, i, j, s, np.linalg.inv(trans)]
   else:
