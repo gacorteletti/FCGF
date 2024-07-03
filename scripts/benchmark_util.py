@@ -31,7 +31,7 @@ def gather_results(results):
 def gen_matching_pair(pts_num):
   matching_pairs = []
   for i in range(pts_num):
-    for j in range(i + 1, pts_num):
+    for j in range(i + 2, pts_num): #<<<<<<<<<<<<< change +1 -> +2 to consider only non-consecutive pairs
       matching_pairs.append([i, j, pts_num])
   return matching_pairs
 
