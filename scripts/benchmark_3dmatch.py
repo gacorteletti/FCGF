@@ -93,6 +93,9 @@ def registration(feature_path, voxel_size):
   
   logging.info("======================================= REGISTRATION =======================================")
   
+  output_path = "./registration_output/"
+  ensure_dir(output_path)
+
   # List file from the extract_features_batch function
   with open(os.path.join(feature_path, "list.txt")) as f:
     sets = f.readlines()
@@ -108,8 +111,8 @@ def registration(feature_path, voxel_size):
     for m in matching_pairs:
       results.append(do_single_pair_matching(feature_path, set_name, m, voxel_size))
     traj = gather_results(results)
-    logging.info(f"Writing the trajectory to {feature_path}/{set_name}.log")
-    write_trajectory(traj, "%s.log" % (os.path.join(feature_path, set_name)))
+    logging.info(f"Writing the trajectory to {output_path}/{set_name}.log")
+    write_trajectory(traj, "%s.log" % (os.path.join(output_path, set_name)))
 
 
 def do_single_pair_evaluation(feature_path,
