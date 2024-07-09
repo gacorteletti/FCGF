@@ -15,7 +15,7 @@ def run_ransac(xyz0, xyz1, feat0, feat1, voxel_size):
       o3d.pipelines.registration.TransformationEstimationPointToPoint(False), 4, [
           o3d.pipelines.registration.CorrespondenceCheckerBasedOnEdgeLength(0.9),
           o3d.pipelines.registration.CorrespondenceCheckerBasedOnDistance(distance_threshold)
-      ], o3d.pipelines.registration.RANSACConvergenceCriteria(500, 1.0))
+      ], o3d.pipelines.registration.RANSACConvergenceCriteria(4000000, 500))
   return result_ransac.transformation
 
 
