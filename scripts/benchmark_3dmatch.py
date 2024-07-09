@@ -111,7 +111,7 @@ def registration(feature_path, voxel_size):
     for m in matching_pairs:
       results.append(do_single_pair_matching(feature_path, set_name, m, voxel_size))
     traj = gather_results(results)
-    logging.info(f"Writing the trajectory to {output_path}/{set_name}_FCGF.log")
+    logging.info(f"Writing the trajectory to {output_path}{set_name}_FCGF.log")
     write_trajectory(traj, "%s_FCGF.log" % (os.path.join(output_path, set_name)))
 
 

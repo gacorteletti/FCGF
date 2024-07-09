@@ -25,7 +25,7 @@ if not os.path.isfile('redkitchen-20.ply'):
 def demo(config):
   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-  checkpoint = torch.load(config.model)
+  checkpoint = torch.load(config.model, map_location=device)
   model = ResUNetBN2C(1, 16, normalize_feature=True, conv1_kernel_size=3, D=3)
   model.load_state_dict(checkpoint['state_dict'])
   model.eval()
@@ -46,7 +46,8 @@ def demo(config):
   vis_pcd = get_colored_point_cloud_feature(vis_pcd,
                                             feature.detach().cpu().numpy(),
                                             config.voxel_size)
-  o3d.visualization.draw_geometries([vis_pcd])
+  #o3d.visualization.draw_geometries([vis_pcd])       # <<<<<<<<<<<<<< draw_geometries() doesn't work on Colab
+  o3d.io.write_triangle_mesh('output.ply', vis_pcd)   # <<<<<<<<<<<<<< instead, export output so we can access it
 
 
 if __name__ == '__main__':
