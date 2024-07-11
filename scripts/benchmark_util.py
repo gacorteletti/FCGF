@@ -2,6 +2,7 @@ import open3d as o3d
 import os
 import logging
 import numpy as np
+import random
 
 from util.trajectory import CameraPose
 from util.pointcloud import compute_overlap_ratio, \
@@ -15,7 +16,7 @@ def run_ransac(xyz0, xyz1, feat0, feat1, voxel_size):
       o3d.pipelines.registration.TransformationEstimationPointToPoint(False), 4, [
           o3d.pipelines.registration.CorrespondenceCheckerBasedOnEdgeLength(0.9),
           o3d.pipelines.registration.CorrespondenceCheckerBasedOnDistance(distance_threshold)
-      ], o3d.pipelines.registration.RANSACConvergenceCriteria(4000000, 500))
+      ], o3d.pipelines.registration.RANSACConvergenceCriteria(4000000, 1.0))
   return result_ransac.transformation
 
 
@@ -28,12 +29,21 @@ def gather_results(results):
   return traj
 
 
-def gen_matching_pair(pts_num):
+def gen_matching_pair(pts_num, source_path=False, scene=False, subset=False):
   matching_pairs = []
-  for i in range(pts_num):
-    for j in range(i + 2, pts_num): #<<<<<<<<<<<<< change +1 -> +2 to consider only non-consecutive pairs
-      matching_pairs.append([i, j, pts_num])
-  return matching_pairs
+  if not subset:
+    for i in range(pts_num):
+      for j in range(i + 2, pts_num): #<<<<<<<<<<<<< change +1 -> +2 to consider only non-consecutive pairs
+        matching_pairs.append([i, j, pts_num])
+    return matching_pairs
+  else:
+    gt_path = os.path.join(source_path, '%s-evaluation' %scene, 'gt.log')
+    with open(gt_path, 'r') as f:
+      for idx, line in enumerate(f):
+        line = line.replace('\n', '').replace('\t', '').split()
+        if (idx%5==0) and (line[1]-line[0]>=1):
+          matching_pairs.append([line[0], line[1], subset])
+      return random.sample(matching_pairs, k=subset)
 
 
 def read_data(feature_path, name):
