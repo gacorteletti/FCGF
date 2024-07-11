@@ -35,15 +35,20 @@ def gen_matching_pair(pts_num, source_path=None, scene=None, subset=None):
     for i in range(pts_num):
       for j in range(i + 2, pts_num): #<<<<<<<<<<<<< change +1 -> +2 to consider only non-consecutive pairs
         matching_pairs.append([i, j, pts_num])
-    return matching_pairs
   else:
     gt_path = os.path.join(source_path, '%s-evaluation' %scene, 'gt.log')
     with open(gt_path, 'r') as f:
       for idx, line in enumerate(f):
         line = line.replace('\n', '').replace('\t', '').split()
-        if (idx%5==0) and (int(line[1])-int(line[0])>=1):
+        if (idx%5==0) and (int(line[1])-int(line[0])>=2):
           matching_pairs.append([int(line[0]), int(line[1]), subset])
-      return random.sample(matching_pairs, k=subset)
+      n_comb = (subset-1)*(subset-2)/2
+      matching_pairs = random.sample(matching_pairs, k=n_comb)
+  with open('matching_pairs.txt', 'a') as out:
+    out.write(f"Set: {scene}\n")
+    for pair in matching_pairs:
+      out.write(f"{pair[0]} {pair[1]}\n")
+  return matching_pairs
 
 
 def read_data(feature_path, name):
