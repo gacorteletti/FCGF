@@ -29,7 +29,7 @@ def gather_results(results):
   return traj
 
 
-def gen_matching_pair(pts_num, source_path=False, scene=False, subset=False):
+def gen_matching_pair(pts_num, source_path=None, scene=None, subset=None):
   matching_pairs = []
   if not subset:
     for i in range(pts_num):
@@ -41,7 +41,7 @@ def gen_matching_pair(pts_num, source_path=False, scene=False, subset=False):
     with open(gt_path, 'r') as f:
       for idx, line in enumerate(f):
         line = line.replace('\n', '').replace('\t', '').split()
-        if (idx%5==0) and (line[1]-line[0]>=1):
+        if (idx%5==0) and (int(line[1])-int(line[0])>=1):
           matching_pairs.append([line[0], line[1], subset])
       return random.sample(matching_pairs, k=subset)
 
