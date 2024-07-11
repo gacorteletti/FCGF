@@ -105,7 +105,7 @@ def registration(feature_path, voxel_size):
   for s in sets:
     set_name = s[0]
     pts_num = int(s[1]) 
-    matching_pairs = gen_matching_pair(pts_num, args.source, set_name, subset=3)  # for now, limit the test split to a subset of 5 clouds per scene (to save time)
+    matching_pairs = gen_matching_pair(pts_num, args.source, set_name, subset=5)  # for now, limit the test split to a subset of 5 clouds per scene (to save time)
     results = []                                                                  # to run all split, remove additiona subset parameter or set it to False (default)
 
     logging.info("Set: %s" % (set_name))
