@@ -100,8 +100,6 @@ def registration(feature_path, voxel_size):
   with open(os.path.join(feature_path, "list.txt")) as f:
     sets = f.readlines()
     sets = [x.strip().split() for x in sets]
-  if not os.path.isdir('matching_pairs.txt'):
-    os.makedirs('matching_pairs.txt')
   with open('matching_pairs.txt', 'w') as out:
     out.write("")
   for s in sets:
