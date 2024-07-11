@@ -42,7 +42,7 @@ def gen_matching_pair(pts_num, source_path=None, scene=None, subset=None):
         line = line.replace('\n', '').replace('\t', '').split()
         if (idx%5==0) and (int(line[1])-int(line[0])>=2):
           matching_pairs.append([int(line[0]), int(line[1]), subset])
-      n_comb = (subset-1)*(subset-2)/2
+      n_comb = int((subset-1)*(subset-2)/2)
       matching_pairs = random.sample(matching_pairs, k=n_comb)
   with open('matching_pairs.txt', 'a') as out:
     out.write(f"Set: {scene}\n")
