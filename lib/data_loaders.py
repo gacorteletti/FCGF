@@ -1,5 +1,3 @@
-# -*- coding: future_fstrings -*-
-#
 # Written by Chris Choy <chrischoy@ai.stanford.edu>
 # Distributed under MIT License
 import logging

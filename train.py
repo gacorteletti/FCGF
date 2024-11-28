@@ -1,4 +1,3 @@
-# -*- coding: future_fstrings -*-
 import open3d as o3d  # prevent loading error
 
 import sys
