@@ -8,6 +8,8 @@ import argparse
 import logging
 import open3d as o3d
 
+# Add the parent directory (../FCGF/) to sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from lib.timer import Timer, AverageMeter
 
 from util.misc import extract_features
@@ -92,29 +94,35 @@ def registration(feature_path, voxel_size):
   """
   
   logging.info("======================================= REGISTRATION =======================================")
+  if args.subset:
+    logging.info(f'======================================== Subset: {args.subset} =========================================')
+  else:
+    logging.info(f'==================================== Whole Test Split ======================================')
   
-  output_path = "./registration_output/"
-  ensure_dir(output_path)
+  output_folder = '/'.join(args.target.split('/')[:-1])
+  registration_path = f"{output_folder}/registration"
+  log_path = f"{registration_path}/logs"
+  ensure_dir(log_path)
 
   # List file from the extract_features_batch function
   with open(os.path.join(feature_path, "list.txt")) as f:
     sets = f.readlines()
     sets = [x.strip().split() for x in sets]
-  with open('matching_pairs.txt', 'w') as out:
+  with open(f'{registration_path}/matching_pairs.txt', 'w') as out:
     out.write("")
   for s in sets:
     set_name = s[0]
     pts_num = int(s[1]) 
-    matching_pairs = gen_matching_pair(pts_num, args.source, set_name, subset=5)  # for now, limit the test split to a subset of 5 clouds per scene (to save time)
-    results = []                                                                  # to run all split, remove additiona subset parameter or set it to False (default)
+    matching_pairs = gen_matching_pair(pts_num, args.source, set_name, args.subset, registration_path)  # for now, limit the test split to a subset of 5 clouds per scene (to save time)
+    results = []                                                                                        # to run all split, remove additiona subset parameter or set it to False (default)
 
     logging.info("Set: %s" % (set_name))
 
     for m in matching_pairs:
       results.append(do_single_pair_matching(feature_path, set_name, m, voxel_size))
     traj = gather_results(results)
-    logging.info(f"Writing the trajectory to {output_path}{set_name}_FCGF.log")
-    write_trajectory(traj, "%s_FCGF.log" % (os.path.join(output_path, set_name)))
+    logging.info(f"Writing the trajectory to {log_path}/{set_name}_FCGF.log")
+    write_trajectory(traj, "%s_FCGF.log" % (os.path.join(log_path, set_name)))
 
 
 def do_single_pair_evaluation(feature_path,
@@ -238,6 +246,11 @@ if __name__ == '__main__':
       type=int,
       default=5000,
       help='Number of random keypoints for each scene')
+  parser.add_argument(
+      '--subset',
+      default=None,
+      type=int,
+      help='Number of point clouds per scene to be considered. If you want to use the complete test split, remove this flag')
 
   args = parser.parse_args()
 
@@ -249,7 +262,7 @@ if __name__ == '__main__':
     assert args.target is not None
 
     ensure_dir(args.target)
-    checkpoint = torch.load(args.model, map_location=device) #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    checkpoint = torch.load(args.model, map_location=device, weights_only=False) #<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     config = checkpoint['config']
 
     num_feats = 1
