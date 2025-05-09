@@ -101,7 +101,7 @@ def registration(feature_path, voxel_size):
   
   output_folder = '/'.join(args.target.split('/')[:-1])
   registration_path = f"{output_folder}/registration"
-  log_path = f"{registration_path}/logs"
+  log_path = f"{registration_path}/initial_guesses_logs"
   ensure_dir(log_path)
 
   # List file from the extract_features_batch function
@@ -110,6 +110,10 @@ def registration(feature_path, voxel_size):
     sets = [x.strip().split() for x in sets]
   with open(f'{registration_path}/matching_pairs.txt', 'w') as out:
     out.write("")
+  
+  # Set Open3D's verbosity level to Debug to capture detailed iteration information
+  o3d.utility.set_verbosity_level(o3d.utility.VerbosityLevel.Debug)
+  
   for s in sets:
     set_name = s[0]
     pts_num = int(s[1]) 
@@ -119,11 +123,14 @@ def registration(feature_path, voxel_size):
     logging.info("Set: %s" % (set_name))
 
     for m in matching_pairs:
-      results.append(do_single_pair_matching(feature_path, set_name, m, voxel_size))
+      results.append(do_single_pair_matching(feature_path, set_name, m, voxel_size, args.inlier_th))
     traj = gather_results(results)
     logging.info(f"Writing the trajectory to {log_path}/{set_name}_FCGF.log")
     write_trajectory(traj, "%s_FCGF.log" % (os.path.join(log_path, set_name)))
 
+
+  # Returns Open3D's verbosity level to default mode
+  o3d.utility.set_verbosity_level(o3d.utility.VerbosityLevel.Error)
 
 def do_single_pair_evaluation(feature_path,
                               set_name,
@@ -251,6 +258,11 @@ if __name__ == '__main__':
       default=None,
       type=int,
       help='Number of point clouds per scene to be considered. If you want to use the complete test split, remove this flag')
+  parser.add_argument(
+      '--inlier_th',
+      default=None,
+      type=float,
+      help='Value for the threhsold of the maximum distance two corresponding points can have after the alignment for it to be considered an inlier')
 
   args = parser.parse_args()
 
