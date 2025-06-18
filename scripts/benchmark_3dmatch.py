@@ -24,6 +24,10 @@ import torch
 
 import MinkowskiEngine as ME
 
+# import the timer decorator defined in the other file
+from scripts.timer_decorator import timer, total_stage_times
+
+
 ch = logging.StreamHandler(sys.stdout)
 logging.getLogger().setLevel(logging.INFO)
 logging.basicConfig(
@@ -31,7 +35,7 @@ logging.basicConfig(
 
 o3d.utility.set_verbosity_level(o3d.utility.VerbosityLevel.Error)
 
-
+@timer("preprocessing")
 def extract_features_batch(model, config, source_path, target_path, voxel_size, device):
 
   folders = get_folder_list(source_path)
@@ -305,3 +309,9 @@ if __name__ == '__main__':
     assert (args.target is not None)
     with torch.no_grad():
       registration(args.target, args.voxel_size)
+
+
+  # Print the time results (only preprocessing and ransac, as icp will be done later by the main script)
+  print("\n=== Total stage timings (benchmark_3dmatch.py) ===")
+  for stage, t in total_stage_times.items():
+    print(f"{stage} total time = {t:.5f}s")

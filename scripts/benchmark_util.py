@@ -8,7 +8,11 @@ from util.trajectory import CameraPose
 from util.pointcloud import compute_overlap_ratio, \
     make_open3d_point_cloud, make_open3d_feature_from_numpy
 
+# import the timer decorator defined in the other file
+from scripts.timer_decorator import timer, total_stage_times
 
+
+@timer("ransac")
 def run_ransac(xyz0, xyz1, feat0, feat1, voxel_size, inlier_th=None):
   if inlier_th:
     distance_threshold = inlier_th
