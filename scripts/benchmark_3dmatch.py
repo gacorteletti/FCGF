@@ -27,6 +27,9 @@ import MinkowskiEngine as ME
 # import the timer decorator defined in the other file
 from scripts.timer_decorator import timer, total_stage_times
 
+# import the noise generator defined in the other file
+from scripts.noise_generator import read_pcd
+
 
 ch = logging.StreamHandler(sys.stdout)
 logging.getLogger().setLevel(logging.INFO)
@@ -36,7 +39,7 @@ logging.basicConfig(
 o3d.utility.set_verbosity_level(o3d.utility.VerbosityLevel.Error)
 
 @timer("preprocessing")
-def extract_features_batch(model, config, source_path, target_path, voxel_size, device):
+def extract_features_batch(model, config, source_path, target_path, voxel_size, device, **noise_kwargs):
 
   folders = get_folder_list(source_path)
   assert len(folders) > 0, f"Could not find 3DMatch folders under {source_path}"
@@ -57,7 +60,7 @@ def extract_features_batch(model, config, source_path, target_path, voxel_size, 
     f.write("%s %d\n" % (fo_base, len(files)))
     for i, fi in enumerate(files):
       # Extract features from a file
-      pcd = o3d.io.read_point_cloud(fi)
+      pcd = read_pcd(fi, **noise_kwargs)
       save_fn = "%s_%03d" % (fo_base, i)
       if i % 100 == 0:
         logging.info(f"{i} / {len(files)}: {save_fn}")
@@ -89,7 +92,7 @@ def extract_features_batch(model, config, source_path, target_path, voxel_size, 
   f.close()
 
 
-def registration(feature_path, voxel_size):
+def registration(feature_path, voxel_size, **noise_kwargs):
   """
   Gather .log files produced in --target folder and run this Matlab script
   https://github.com/andyzeng/3dmatch-toolbox#geometric-registration-benchmark
@@ -127,7 +130,7 @@ def registration(feature_path, voxel_size):
     logging.info("Set: %s" % (set_name))
 
     for m in matching_pairs:
-      results.append(do_single_pair_matching(feature_path, set_name, m, voxel_size, args.inlier_th))
+      results.append(do_single_pair_matching(feature_path, set_name, m, voxel_size, args.inlier_th, **noise_kwargs))
     traj = gather_results(results)
     logging.info(f"Writing the trajectory to {log_path}/{set_name}_FCGF.log")
     write_trajectory(traj, "%s_FCGF.log" % (os.path.join(log_path, set_name)))
@@ -267,8 +270,83 @@ if __name__ == '__main__':
       default=None,
       type=float,
       help='Value for the threhsold of the maximum distance two corresponding points can have after the alignment for it to be considered an inlier')
+  parser.add_argument(
+      '--seed',
+      default=None,
+      type=int,
+      help='Noise RNG seed for reproducibility'
+  )
+  parser.add_argument(
+    '--fixed',
+    action='store_true',
+    help='If set, use a single global sigma (default)'
+  )
+  parser.add_argument(
+    '--no-fixed',
+    dest='fixed',
+    action='store_false',
+    help='Use per-point sigma (variable noise)'
+  )
+  parser.set_defaults(fixed=True)
+  parser.add_argument(
+      '--sigma',
+      default=None,
+      type=float,
+      help='lower‐bound (or sole) standard deviation'
+  )
+  parser.add_argument(
+      '--sigma_max',
+      default=None,
+      type=float,
+      help='upper-bound standard deviation when fixed=False'
+  )
+  parser.add_argument(
+      '--spike_ratio',
+      default=None,
+      type=float,
+      help='fraction of points to turn into spikes (0.0 – 1.0)'
+  )
+  parser.add_argument(
+      '--spike_min',
+      default=None,
+      type=float,
+      help='minimum spike magnitude'
+  )
+  parser.add_argument(
+      '--spike_max',
+      default=None,
+      type=float,
+      help='maximum spike magnitude'
+  )
+  parser.add_argument(
+      '--spike_skew',
+      default=None,
+      type=float,
+      help='exponent to skew magnitude distribution (>1 to produce more small spikes)'
+  )
+  parser.add_argument(
+      '--pepper_ratio',
+      default=None,
+      type=float,
+      help='fraction of points to randomly remove (0.0–1.0)'
+  )
 
   args = parser.parse_args()
+
+  # Auxiliary dictionary with all possible settings the user might specify
+  aux_full_noise_dict = {'seed': args.seed,
+                         'fixed': args.fixed,
+                         'sigma': args.sigma,
+                         'sigma_max': args.sigma_max,
+                         'spike_ratio': args.spike_ratio,
+                         'spike_min': args.spike_min,
+                         'spike_max': args.spike_max,
+                         'spike_skew': args.spike_skew,
+                         'pepper_ratio': args.pepper_ratio
+                        }
+  # Then we filter out arguments that were not defined by the user (i.e. were set to None as default)
+  # This prevents overwriting the default values of the add_noise or read_pcd function with None
+  noise_kwargs = {k:v for k,v in aux_full_noise_dict.items() if v is not None}
 
   device = torch.device('cuda' if args.with_cuda else 'cpu')
 
@@ -297,7 +375,7 @@ if __name__ == '__main__':
 
     with torch.no_grad():
       extract_features_batch(model, config, args.source, args.target, config.voxel_size,
-                             device)
+                             device, **noise_kwargs)
 
   if args.evaluate_feature_match_recall:
     assert (args.target is not None)
@@ -308,7 +386,7 @@ if __name__ == '__main__':
   if args.evaluate_registration:
     assert (args.target is not None)
     with torch.no_grad():
-      registration(args.target, args.voxel_size)
+      registration(args.target, args.voxel_size, **noise_kwargs)
 
 
   # Print the time results (only preprocessing and ransac, as icp will be done later by the main script)

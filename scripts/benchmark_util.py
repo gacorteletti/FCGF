@@ -11,6 +11,9 @@ from util.pointcloud import compute_overlap_ratio, \
 # import the timer decorator defined in the other file
 from scripts.timer_decorator import timer, total_stage_times
 
+# import the noise generator defined in the other file
+from scripts.noise_generator import add_noise
+
 
 @timer("ransac")
 def run_ransac(xyz0, xyz1, feat0, feat1, voxel_size, inlier_th=None):
@@ -76,20 +79,21 @@ def gen_matching_pair(pts_num, source_path=None, scene=None, subset=None, regist
   return matching_pairs
 
 
-def read_data(feature_path, name):
+def read_data(feature_path, name, **noise_kwargs):
   data = np.load(os.path.join(feature_path, name + ".npz"))
   xyz = make_open3d_point_cloud(data['xyz'])
+  xyz = add_noise(xyz, **noise_kwargs)
   feat = make_open3d_feature_from_numpy(data['feature'])
   return data['points'], xyz, feat
 
 
-def do_single_pair_matching(feature_path, set_name, m, voxel_size, inlier_th):
+def do_single_pair_matching(feature_path, set_name, m, voxel_size, inlier_th, **noise_kwargs):
   i, j, s = m
   name_i = "%s_%03d" % (set_name, i)
   name_j = "%s_%03d" % (set_name, j)
   logging.info("\t\tMatching %03d %03d" % (i, j))
-  points_i, xyz_i, feat_i = read_data(feature_path, name_i)
-  points_j, xyz_j, feat_j = read_data(feature_path, name_j)
+  points_i, xyz_i, feat_i = read_data(feature_path, name_i, **noise_kwargs)
+  points_j, xyz_j, feat_j = read_data(feature_path, name_j, **noise_kwargs)
   if len(xyz_i.points) < len(xyz_j.points):
     trans = run_ransac(xyz_i, xyz_j, feat_i, feat_j, voxel_size, inlier_th)
   else:
